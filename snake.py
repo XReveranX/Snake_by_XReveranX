@@ -20,9 +20,13 @@ snake_speed=15 #Кол-во обновлений игры в секунду (т�
 font_style = pygame.font.SysFont("bahnschrift", 50, False, True) #Задаём стиль текста(Шрифт, размер, Жирный?, Курсив?)
 clock = pygame.time.Clock() #Переменная отвечающая за подсчёт времени
 
-ap_texture = pygame.image.load("./textures/apple.png").convert() #Загружаем и конвертируем(в удобный формат) изображения(текстуры).
+ap_texture = pygame.image.load("./textures/apple.png").convert_alpha() #Загружаем и конвертируем(в удобный формат) изображения(текстуры).
 tutorial_texture = pygame.image.load("./textures/tutorial.png").convert()
 info_texture = pygame.image.load("./textures/info.png").convert()
+snake_head_texture_s = pygame.image.load("./textures/Snake_head.png").convert_alpha()
+snake_head_texture_d = pygame.transform.rotate(pygame.image.load("./textures/Snake_head.png").convert_alpha(), 90)
+snake_head_texture_w = pygame.transform.rotate(pygame.image.load("./textures/Snake_head.png").convert_alpha(), 180)
+snake_head_texture_a = pygame.transform.rotate(pygame.image.load("./textures/Snake_head.png").convert_alpha(), -90)
 
 def net(): #Функция для рисования сетки
     for x in range(0, dis_x, snake_block):
@@ -38,12 +42,19 @@ def message(msg,x,y): #Функция для вывода сообщений н�
    mesg = font_style.render(msg, True, black, grey)
    dis.blit(mesg, [x, y])
 
-def our_snake(snake_block, snake_list): #Функция для рисования змея окоянного
+def our_snake(snake_block, snake_list, previous_key): #Функция для рисования змея окоянного
    for x in snake_list:
         if x==snake_list[len(snake_list)-1]:
-            pygame.draw.rect(dis, white, [x[0]-1, x[1]-1, snake_block+3, snake_block+3])  #Рисую голову змея белым
+            if previous_key == 'w' or previous_key == 'wx':
+                dis.blit(snake_head_texture_w, (x[0]-2, x[1]-8))
+            if previous_key == 'd' or previous_key == 'dx':
+                dis.blit(snake_head_texture_d, (x[0], x[1]-2))
+            if previous_key == 's' or previous_key == 'sx':
+                dis.blit(snake_head_texture_s, (x[0]-2, x[1]))
+            if previous_key == 'a' or previous_key == 'ax':
+                dis.blit(snake_head_texture_a, (x[0]-8, x[1]-2))
         else:
-            pygame.draw.rect(dis, grey, [x[0], x[1], snake_block, snake_block])  #Рисую хвост змея серым
+            pygame.draw.rect(dis, white, [x[0], x[1], snake_block, snake_block])  #Рисую хвост змея серым
 
 def tutorial(): #Функия для вывода обучения, и последующего запуска игры
     learning_end = False #флаг того, что обучение не нужно закрывать
@@ -73,7 +84,7 @@ def game(): #Игровая логика
     snake_list = [] #Хвост змея окоянного
     snake_len = 2 #Длина змея окоянного
     stop=True #Флаг, означающий что змей стоит
-    previous_key = '' #Переменная содержащая последнюю нажатую клавишу действия
+    previous_key = 'wx' #Переменная содержащая последнюю нажатую клавишу действия
     move_accept = False #Переменная для ограничения кол-во действий в тик
     portal_xy = [dis_x/2,dis_y/2] #Координаты портала
     dot_portal = False #Переменная означающая что портал используется в данный момент
@@ -107,7 +118,7 @@ def game(): #Игровая логика
                     snake_len = 2
                     snake_list = []
                     stop=True
-                    previous_key = ''
+                    previous_key = 'wx'
                     move_accept = False
                     dot_portal=False
                     portal_xy = [dis_x/2,dis_y/2]
@@ -137,7 +148,7 @@ def game(): #Игровая логика
                         y1_change = snake_block
                         x1_change = 0
                     elif event.key == pygame.K_x: #стоп x
-                        previous_key = ''
+                        previous_key = previous_key + 'x'
                         stop=True
                         y1_change = 0
                         x1_change = 0
@@ -180,7 +191,7 @@ def game(): #Игровая логика
 
         dis.fill(black) #Красим игровое поле в black
         net() #Рисуем сетку
-        
+
         dis.blit(ap_texture, (foodx-4, foody-4)) #Рисуем текстуру еды
         if dot_portal == True: #Рисуем портал
             pygame.draw.rect(dis, purple, [portal_xy[0]-3, portal_xy[1]-3, snake_block+6, snake_block+6])
@@ -188,8 +199,9 @@ def game(): #Игровая логика
             portal_time +=1
             if  portal_time == snake_len:
                 dot_portal = False
-        our_snake(snake_block, snake_list) #Рисуем змея окоянного
 
+        our_snake(snake_block, snake_list, previous_key) #Рисуем змея окоянного
+            
         pygame.draw.rect(dis, grey, [0, 0, dis_x, 50]) #Рисуем серый прямоугольник сверху
         dis.blit(info_texture, (1210, 0)) #Рисуем текстуру подсказки кнопки обучения
         score(snake_len) #Выводим счёт
